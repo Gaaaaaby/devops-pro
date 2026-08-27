@@ -1,0 +1,34 @@
+name: Compose CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Build and start services
+        run: docker-compose up --build -d
+
+      - name: Wait for API
+        run: |
+          echo "Esperando API..."
+          for i in {1..20}; do
+            curl -s http://localhost:8000/health && break
+            sleep 2
+          done
+
+      - name: Test API health
+        run: curl -s http://localhost:8000/health
